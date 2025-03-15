@@ -17,7 +17,7 @@ async def on_ready():
         synced = await bot.tree.sync()
         print(f'📌 {len(synced)} slash commands synced.')
     except Exception as e:
-        print(f'Error: {e}')
+        print(f'Erro ao sincronizar: {e}')
     print('-----')
 
 # ---- FUNCTIONS ----
@@ -52,6 +52,8 @@ def load_links():
 # ---- SLASH COMMANDS ----
 @bot.tree.command(name='search', description='Offline database search for cracked games.')
 async def search(interaction: discord.Interaction, input: str):
+    await interaction.response.defer(thinking=True)
+
     links_elamigos, links_steamrip = load_links()
     input = input.lower()
     results_elamigos = [link for link in links_elamigos if input in link.lower()]
@@ -68,7 +70,7 @@ async def search(interaction: discord.Interaction, input: str):
         embed.add_field(name='🔥 STEAMRIP', value='\n'.join(results_steamrip[:5]), inline=False)
 
 
-    await interaction.response.send_message(embed=embed)
+    await interaction.followup.send(embed=embed)
 
 
 bot.run(TOKEN)
