@@ -7,7 +7,7 @@ A personal Discord bot for **The Pirate Way** server, designed to **search for g
 - 🛡️ Filters out unsafe links.
 - 📂 Supports multiple local HTML files for fast lookups.
 - 📜 Sends results in a clean and structured Discord embed.
-- ➕ An entire megathread included.
+- ➕ An entire safe megathread included.
 
 ## 🚀 Installation
 1. **Clone this repository**:
