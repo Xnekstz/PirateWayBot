@@ -11,8 +11,8 @@ A personal Discord bot for **The Pirate Way** server, designed to **search for g
 ## 🚀 Installation
 1. **Clone this repository**:
    ```bash
-   git clone https://github.com/seuusuario/the-pirate-way-bot.git
-   cd the-pirate-way-bot
+   git clone https://github.com/Xnekstz/PirateWayBot.git
+   cd PirateWayBot
    ```
 
 ## 🌐 Our discord server
