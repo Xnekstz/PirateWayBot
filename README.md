@@ -1,9 +1,10 @@
-# 🏴‍☠️ The Pirate Way Bot v1.1
+# 🏴‍☠️ The Pirate Way Bot v1.2
 
 A personal Discord bot for **The Pirate Way** server, designed to **search for games** on popular and virus-free piracy websites and to help new people in piracy.
 
 ## ✨ Features
-- 🔍 Searches for games across multiple piracy websites.
+- 🔍 Searches for **games** across multiple piracy websites.
+- 🔍 Searches for **movies** across multiple piracy websites
 - 🛡️ Filters out unsafe links.
 - 📂 Supports multiple local HTML files for fast lookups.
 - 📜 Sends results in a clean and structured Discord embed.
