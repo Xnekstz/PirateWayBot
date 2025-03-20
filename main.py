@@ -1,6 +1,8 @@
 import discord
 import os
 import json
+import re
+import requests
 from discord.ext import commands
 from bs4 import BeautifulSoup
 
@@ -67,18 +69,18 @@ def load_links():
 @bot.tree.command(
     name="search", description="Offline database search for cracked games."
 )
-async def search(interaction: discord.Interaction, input: str):
+async def search(interaction: discord.Interaction, query: str):
     await interaction.response.defer(thinking=True)
 
     links_elamigos, links_steamrip, links_dodi, links_games4u, links_magipack = (
         load_links()
     )
-    input = input.lower()
-    results_elamigos = [link for link in links_elamigos if input in link.lower()]
-    results_steamrip = [link for link in links_steamrip if input in link.lower()]
-    results_dodi = [link for link in links_dodi if input in link.lower()]
-    results_games4u = [link for link in links_games4u if input in link.lower()]
-    results_magipack = [link for link in links_magipack if input in link.lower()]
+    query = query.lower()
+    results_elamigos = [link for link in links_elamigos if query in link.lower()]
+    results_steamrip = [link for link in links_steamrip if query in link.lower()]
+    results_dodi = [link for link in links_dodi if query in link.lower()]
+    results_games4u = [link for link in links_games4u if query in link.lower()]
+    results_magipack = [link for link in links_magipack if query in link.lower()]
 
     if (
         not results_elamigos
@@ -88,7 +90,7 @@ async def search(interaction: discord.Interaction, input: str):
         and not results_magipack
     ):
         await interaction.followup.send(
-            f"Oops! I couldnt find any results for '{input}' :("
+            f"Oops! I couldnt find any results for '{query}' :("
         )
         return
 
@@ -100,7 +102,7 @@ async def search(interaction: discord.Interaction, input: str):
     magipack_emoji = config["MAGIPACK_EMOJI"]
 
     embed = discord.Embed(
-        title=f"🔎 Results for '{input}'", color=discord.Color.dark_gray()
+        title=f"🔎 Results for '{query}'", color=discord.Color.dark_gray()
     )
     if results_elamigos:
         embed.add_field(
@@ -132,6 +134,62 @@ async def search(interaction: discord.Interaction, input: str):
             value="\n".join(results_magipack[:3]),
             inline=False,
         )
+
+    await interaction.followup.send(embed=embed)
+
+
+@bot.tree.command(
+    name="search_movies", description="Online database search for torrent movies."
+)
+async def search_movies(interaction: discord.Interaction, query: str):
+    await interaction.response.defer(thinking=True)
+
+    results = []
+
+    # FORMATING query
+    if re.search(r"[@#$%^&*()!]", query):
+        await interaction.followup.send("Special characters are not allowed.")
+        return
+    new_query = query.replace(" ", "%20")
+
+    # REQUESTING
+    url = f"https://www.1377x.to/search/{new_query}/1/"
+    try:
+        response = requests.get(url, timeout=10)
+        if response.status_code == 200:
+            soup = BeautifulSoup(response.text, "html.parser")
+
+            for link in soup.find_all("a", href=True):
+                link_text = link.get_text(strip=True)
+                link_url = link["href"].strip()
+
+                if not link_url.startswith("https://"):
+                    link_url = f"https://www.1377x.to{link_url}"
+
+                if query.lower() in link_text.lower():
+                    results.append(f"[{link_text}]({link_url})")
+        else:
+            await interaction.followup.send(
+                "Error while accessing 1337x. Try again later."
+            )
+            return
+    except requests.RequestException:
+        await interaction.followup.send(
+            "⚠️ Could not connect to 1337x. Try again later."
+        )
+        return
+
+    if not results:
+        await interaction.followup.send(
+            f"No movies found for '{query}'.\n**Warning:** 1337x uses a bad search engine, try using single words."
+        )
+        return
+
+    embed = discord.Embed(
+        title=f"🎬 Movies results for '{query}'",
+        description="\n".join(results[:5]),
+        color=discord.Color.dark_gray(),
+    )
 
     await interaction.followup.send(embed=embed)
 
