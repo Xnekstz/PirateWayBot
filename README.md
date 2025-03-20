@@ -4,7 +4,7 @@ A personal Discord bot for **The Pirate Way** server, designed to **search for g
 
 ## ✨ Features
 - 🔍 Searches for **games** across multiple piracy websites.
-- 🔍 Searches for **movies** across multiple piracy websites
+- 🔍 Searches for **movies** across multiple piracy websites.
 - 🛡️ Filters out unsafe links.
 - 📂 Supports multiple local HTML files for fast lookups.
 - 📜 Sends results in a clean and structured Discord embed.
