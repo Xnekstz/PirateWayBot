@@ -33,9 +33,8 @@ def load_links():
     links_elamigos = []
     links_steamrip = []
     links_dodi = []
-    links_games4u = []
-    links_magipack = []
 
+    # FOR OTHERS
     if not os.path.exists(HTML_FOLDER):
         os.makedirs(HTML_FOLDER)
 
@@ -57,37 +56,61 @@ def load_links():
                         links_steamrip.append(f"[{link_text}]({link_url})")
                     elif link_url.startswith("https://dodi-repacks.site"):
                         links_dodi.append(f"[{link_text}]({link_url})")
-                    elif link_url.startswith("https://games4u.org"):
-                        links_games4u.append(f"[{link_text}]({link_url})")
-                    elif link_url.startswith("https://www.magipack.games"):
-                        links_magipack.append(f"[{link_text}]({link_url})")
 
-    return links_elamigos, links_steamrip, links_dodi, links_games4u, links_magipack
+    return links_elamigos, links_steamrip, links_dodi
 
 
 # ---- SLASH COMMANDS ----
 @bot.tree.command(
-    name="search", description="Offline database search for cracked games."
+    name="search-games", description="Offline database search for cracked games."
 )
 async def search(interaction: discord.Interaction, query: str):
     await interaction.response.defer(thinking=True)
 
-    links_elamigos, links_steamrip, links_dodi, links_games4u, links_magipack = (
-        load_links()
-    )
+    # FORMATTING QUERY
+    if re.search(r"[@#$%^*]", query):
+        await interaction.followup.send("Special characters are not allowed.")
+        return
+
+    # FOR FITGIRL
+    results_fitgirl = []
+    search_query = query.replace(" ", "+")
+
+    url = f"https://fitgirl-repacks.site/?s={search_query}"
+    try:
+        response = requests.get(url, timeout=10)
+        if response.status_code == 200:
+            soup = BeautifulSoup(response.text, "html.parser")
+
+            for post in soup.find_all("article"):
+                title_tag = post.find("h1", class_="entry-title")
+                if title_tag:
+                    link = title_tag.find("a", href=True)
+                    link_text = link.get_text(strip=True)
+                    link_url = link["href"].strip()
+
+                    if not link_url.startswith("https://"):
+                        link_url = f"https://fitgirl-repacks.site{link_url}"
+
+                    if query.lower() in link_text.lower():
+                        results_fitgirl.append(f"[{link_text}]({link_url})")
+        else:
+            print("ERROR: Could not connect to https://fitgirl-repacks.site/")
+    except requests.RequestException:
+        print("ERROR: Could not connect to https://fitgirl-repacks.site/")
+
+    # FOR OTHERS
+    links_elamigos, links_steamrip, links_dodi = load_links()
     query = query.lower()
     results_elamigos = [link for link in links_elamigos if query in link.lower()]
     results_steamrip = [link for link in links_steamrip if query in link.lower()]
     results_dodi = [link for link in links_dodi if query in link.lower()]
-    results_games4u = [link for link in links_games4u if query in link.lower()]
-    results_magipack = [link for link in links_magipack if query in link.lower()]
 
     if (
         not results_elamigos
         and not results_steamrip
         and not results_dodi
-        and not results_games4u
-        and not results_magipack
+        and not results_fitgirl
     ):
         await interaction.followup.send(
             f"Oops! I couldnt find any results for '{query}' :("
@@ -98,8 +121,7 @@ async def search(interaction: discord.Interaction, query: str):
     elamigos_emoji = config["ELAMIGOS_EMOJI"]
     steamrip_emoji = config["STEAMRIP_EMOJI"]
     dodi_emoji = config["DODI_EMOJI"]
-    games4u_emoji = config["GAMES4U_EMOJI"]
-    magipack_emoji = config["MAGIPACK_EMOJI"]
+    fitgirl_emoji = config["FITGIRL_EMOJI"]
 
     embed = discord.Embed(
         title=f"🔎 Results for '{query}'", color=discord.Color.dark_gray()
@@ -107,31 +129,25 @@ async def search(interaction: discord.Interaction, query: str):
     if results_elamigos:
         embed.add_field(
             name=f"{elamigos_emoji} ELAMIGOS",
-            value="\n".join(results_elamigos[:3]),
+            value="\n".join(f"- {game}" for game in results_elamigos[:3]),
             inline=False,
         )
     if results_steamrip:
         embed.add_field(
             name=f"{steamrip_emoji} STEAMRIP",
-            value="\n".join(results_steamrip[:3]),
+            value="\n".join(f"- {game}" for game in results_steamrip[:3]),
             inline=False,
         )
     if results_dodi:
         embed.add_field(
             name=f"{dodi_emoji} DODI REPACKS",
-            value="\n".join(results_dodi[:3]),
+            value="\n".join(f"- {game}" for game in results_dodi[:3]),
             inline=False,
         )
-    if results_games4u:
+    if results_fitgirl:
         embed.add_field(
-            name=f"{games4u_emoji} GAMES4U",
-            value="\n".join(results_games4u[:3]),
-            inline=False,
-        )
-    if results_magipack:
-        embed.add_field(
-            name=f"{magipack_emoji} MAGIPACK",
-            value="\n".join(results_magipack[:3]),
+            name=f"{fitgirl_emoji} FITGIRL REPACKS (online-search)",
+            value="\n".join(f"- {game}" for game in results_fitgirl[:3]),
             inline=False,
         )
 
@@ -139,7 +155,7 @@ async def search(interaction: discord.Interaction, query: str):
 
 
 @bot.tree.command(
-    name="search_movies", description="Online database search for torrent movies."
+    name="search-movies", description="Online database search for torrent movies."
 )
 async def search_movies(interaction: discord.Interaction, query: str):
     await interaction.response.defer(thinking=True)
@@ -147,13 +163,14 @@ async def search_movies(interaction: discord.Interaction, query: str):
     results = []
 
     # FORMATING query
-    if re.search(r"[@#$%^&*()!]", query):
+    if re.search(r"[@#$%^*]", query):
         await interaction.followup.send("Special characters are not allowed.")
         return
-    new_query = query.replace(" ", "%20")
+    search_query = query.replace(" ", "%20")
+    dot_query = query.replace(" ", ".")
 
     # REQUESTING
-    url = f"https://www.1377x.to/search/{new_query}/1/"
+    url = f"https://www.1377x.to/search/{search_query}/1/"
     try:
         response = requests.get(url, timeout=10)
         if response.status_code == 200:
@@ -166,7 +183,10 @@ async def search_movies(interaction: discord.Interaction, query: str):
                 if not link_url.startswith("https://"):
                     link_url = f"https://www.1377x.to{link_url}"
 
-                if query.lower() in link_text.lower():
+                if (
+                    query.lower() in link_text.lower()
+                    or dot_query.lower() in link_text.lower()
+                ):
                     results.append(f"[{link_text}]({link_url})")
         else:
             await interaction.followup.send(
@@ -190,6 +210,54 @@ async def search_movies(interaction: discord.Interaction, query: str):
         description="\n".join(results[:5]),
         color=discord.Color.dark_gray(),
     )
+
+    await interaction.followup.send(embed=embed)
+
+
+@bot.tree.command(
+    name="top-games", description="shows the most played games on steam at the moment."
+)
+async def top_games(interaction: discord.Interaction):
+    await interaction.response.defer(thinking=True)
+
+    url = "https://steamcharts.com/top"
+    try:
+        response = requests.get(url, timeout=10)
+        if response.status_code == 200:
+            soup = BeautifulSoup(response.text, "html.parser")
+
+            games = []
+            for row in soup.select("tr")[1:11]:
+                cols = row.find_all("td")
+                if len(cols) >= 3:
+                    rank = cols[0].text.strip()
+                    name = cols[1].text.strip()
+                    players = cols[2].text.strip()
+
+                    games.append(f"**{rank}** {name} - 🎮 {players} players")
+                else:
+                    await interaction.followup.send(
+                        "Steamcharts changed it's structure, pls contact `politicalizando`"
+                    )
+                    return
+        else:
+            await interaction.followup.send(
+                "Could not fetch data from https://steamcharts.com/top"
+            )
+            return
+    except requests.RequestException:
+        await interaction.followup.send(
+            "Could not connect to https://steamcharts.com/top"
+        )
+        return
+
+    embed = discord.Embed(
+        title="🔥 Top 10 most played games on Steam",
+        description="\n".join(games),
+        url="https://steamcharts.com/top",
+        color=discord.Color.dark_gray(),
+    )
+    embed.set_footer(text="Get them with `/search-games`!")
 
     await interaction.followup.send(embed=embed)
 
@@ -361,7 +429,7 @@ async def vpns(interaction: discord.Interaction):
     await interaction.followup.send(embed=embed)
 
 
-@bot.tree.command(name="all_purpose", description="All purpose search tools.")
+@bot.tree.command(name="all-purpose", description="All purpose search tools.")
 async def all_purpose(interaction: discord.Interaction):
     await interaction.response.defer()
 
@@ -369,6 +437,38 @@ async def all_purpose(interaction: discord.Interaction):
         title="All Purpose Search Tools",
         description="- [RuTracker](https://rutracker.org/) - My favorite.\n"
         "- [1337x](https://www1.13377x.tw/) - A good old one.",
+    )
+
+    await interaction.followup.send(embed=embed)
+
+
+# Getting started command (U can change or delete this one if u want)
+@bot.tree.command(
+    name="getting-started",
+    description="A guide to help new members navigate The Pirate Way server.",
+)
+async def getting_started(interaction: discord.Interaction):
+    await interaction.response.defer(thinking=True)
+
+    # Server description
+    embed = discord.Embed(
+        title="Getting Started",
+        description="**Welcome to The Pirate Way!**\n\n"
+        "The Pirate Way is the ultimate hub for piracy on Discord, where you can easily search or ask for "
+        "games, movies, books, and so much more. Dive in and explore a wealth of resources curated just for you.",
+        color=discord.Color.dark_gray(),
+    )
+
+    # Useful commands field
+    embed.add_field(
+        name="Useful Commands",
+        value=(
+            "**/search** - Offline search for cracked games.\n"
+            "**/search-movies** - Online search for torrent movies.\n\n"
+            "For more website-based resources, try commands like **/games**, **/emulators**, **/softwares**, "
+            "**/books**, **/media**, **/vpns**, and **/all_purpose** to access curated lists of piracy content."
+        ),
+        inline=False,
     )
 
     await interaction.followup.send(embed=embed)

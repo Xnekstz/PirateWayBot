@@ -1,0 +1,17 @@
+I started writing this on 2025-03-23 (v1.2)  
+My Discord for any doubts: politicalizando  
+
+📌 **Changelog for version 1.3** (2025-03-23)  
+
+### New Features
+- FitGirl Integration → Now `/search-games` includes FitGirl Repacks with live online results!  
+- Top-games → Now `/top-games` shows the most played games on steam.
+
+### Improvements
+- Movie Search Improved → More accurate results on `/search-movies`.  
+- Better List Formatting → `/search-games` results now have a clearer layout with bullet points.  
+
+### Removals
+- Removed Games4U & MagiPack → These sites were removed since FitGirl now covers most repacks.  
+
+
