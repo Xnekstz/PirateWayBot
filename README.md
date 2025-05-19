@@ -23,6 +23,3 @@ A personal Discord bot for **The Pirate Way** server, designed to **search for g
    ```
 3. **Configuration**:
    Change the settings on config.json to your own.
-
-## 🌐 Our discord server
-https://discord.gg/b3ZypVbHPV
